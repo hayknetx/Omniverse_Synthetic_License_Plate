@@ -178,13 +178,13 @@ class IndianLicensePlateGenerator:
                 font_size=custom_font_size,
                 max_chars=custom_max_chars,
             )
-        font = self.FONT[font_key]
+        font_regular = self.FONT[font_key]
 
         # generate multi line license plate text
         if multiline:
             lp = self.generate_text(multiline=True)
             region, lp = lp.split(" ", 1) if " " in lp else (lp[:4], lp[4:])
-            text_w, text_h = font.getsize(region)
+            text_w, text_h = font_regular.getsize(region)
             spacing = np.random.choice(self.SPACERS_2, p=[0.2, 0.7, 0.1])
 
             # draw first line
@@ -208,7 +208,77 @@ class IndianLicensePlateGenerator:
             )
 
             lp = region + "+" + lp
+        elif lp_type == "arm_mil":
+            lp = self.generate_text(lp_type)
+            # Load fonts with different styles and sizes
+            font_bold_small = self.load_font(
+                width,
+                height,
+                font_file,
+                font_size=160,
+                max_chars=2,
+            )
+            font_bold_large = self.load_font(
+                width,
+                height,
+                font_file,
+                font_size=200,
+                max_chars=4,
+            )
 
+            # Generate text parts
+            lp_pn = "ՊՆ"
+            lp_front_part, lp_last_part = lp.split()
+            lp_numbers = lp_front_part.replace(lp_pn, "") + " "
+
+            # Measure text widths
+            lp_pn_width, lp_pn_height = font_bold_small.getsize(lp_pn)
+            lp_numbers_width, lp_numbers_height = font_bold_large.getsize(lp_numbers)
+            lp_last_part_width, lp_last_part_height = font_bold_large.getsize(lp_last_part)
+
+            total_width = lp_pn_width + lp_numbers_width + lp_last_part_width
+
+            # Set the baseline position (y-coordinate will be the same for all parts)
+            baseline_y = height // 2 + max(lp_pn_height, lp_numbers_height, lp_last_part_height) // 2
+
+            # Calculate starting x position to center the text
+            x_start = (width - total_width) // 2
+
+            # Draw lp_pn, aligned to the baseline
+            draw.text(
+                (x_start, baseline_y),
+                lp_pn,
+                align="left",
+                fill=text_color,
+                font=font_bold_small,
+                anchor="ls",  # Use "ls" anchor to align text on the baseline
+            )
+
+            # Update x position for the next part
+            x_start += lp_pn_width
+
+            # Draw lp_numbers, aligned to the baseline
+            draw.text(
+                (x_start, baseline_y),
+                lp_numbers,
+                align="left",
+                fill=text_color,
+                font=font_bold_large,
+                anchor="ls",
+            )
+
+            # Update x position for the last part
+            x_start += lp_numbers_width
+
+            # Draw lp_last_part, aligned to the baseline
+            draw.text(
+                (x_start, baseline_y),
+                lp_last_part,
+                align="left",
+                fill=text_color,
+                font=font_regular,
+                anchor="ls",
+            )
         else:
             # generate single line license plate text
             lp = self.generate_text(lp_type)
@@ -217,7 +287,7 @@ class IndianLicensePlateGenerator:
                 lp,
                 align="center",
                 fill=text_color,
-                font=font,
+                font=font_regular,
                 anchor="mm",
             )
 
