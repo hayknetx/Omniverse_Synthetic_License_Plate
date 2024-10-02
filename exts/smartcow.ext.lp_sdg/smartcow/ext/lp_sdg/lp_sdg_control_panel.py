@@ -135,8 +135,8 @@ class LP_SDG_Control_Panel:
         self.__randomize_font = True
 
         # Materials location for LP in scene: ADJUST!
-        self.WHITE_BG_MAT = self.__materials_path + "WhitePlateWithShader_Material"
-        self.YELLOW_BG_MAT = self.__materials_path + "YellowPlateWithShader_Material"
+        self.ARM_BG_MAT = self.__materials_path + "Arm_Material"
+        self.ARM_MIL_BG_MAT = self.__materials_path + "ArmMil_Material"
         self.SCRATCHES_MAT = self.__materials_path + "Procedural_Scratches_material/Scratches_Procedural"
         self.DIRT_MAT = self.__materials_path + "Procedural_Dirt_material/Dirt_Procedural_2"
 
@@ -165,8 +165,8 @@ class LP_SDG_Control_Panel:
         # Calling and setting up the PlateGenerator extension
         self.plate_generator = IndianLicensePlateGenerator(
             working_dir=self.EXTENSION_FOLDER_PATH,
-            white_bg_mat=self.WHITE_BG_MAT,
-            yellow_bg_mat=self.YELLOW_BG_MAT,
+            arm_bg_material=self.ARM_BG_MAT,
+            arm_mil_bg_material=self.ARM_MIL_BG_MAT,
             regions_path=self.__rto_data_path,
         )
 
@@ -179,9 +179,9 @@ class LP_SDG_Control_Panel:
 
         # FONTS
         self.FONT_LIST = [str(i) for i in Path(self.EXTENSION_FOLDER_PATH, self.__font_path).rglob("*.ttf")]
-
+        self.FONT_LIST = ["/usr/share/fonts/truetype/fe/FE.TTF"] + self.FONT_LIST
         # Probability of white plate VS yellow plate
-        self.PLATE_PROB = {"private": 0.75, "commercial": 0.25}  # default: {"private" : 0.75, "commercial" : 0.25}
+        self.PLATE_PROB = {"arm": 0.75, "arm_mil": 0.25}  # default: {"private" : 0.75, "commercial" : 0.25}
 
         # Threshold for distance from camera before the LP is considered "unreadable" (based on the human eye)
         self.CAM_THRESH = 1500.0  # default: 1500.0
@@ -354,7 +354,12 @@ class LP_SDG_Control_Panel:
 
         # GET SCENE OBJECT PATHS HERE!
         # Refresh stage after loading
-        self.STAGE = omni.usd.get_context().get_stage()
+        usd_file_path = "/home/guest/Desktop/Omniverse_Synthetic_License_Plate/exts/smartcow.ext.lp_sdg/smartcow/ext/lp_sdg/usd_scene/Collected_scene/scene.usd"
+        usd_context = omni.usd.get_context()
+        current_stage = usd_context.get_stage()
+        if current_stage is None or usd_context.get_stage().GetRootLayer().identifier != usd_file_path:
+            usd_context.open_stage(usd_file_path)
+        self.STAGE = usd_context.get_stage()
 
         # CAMERAS
         cams = self.STAGE.GetPrimAtPath(self.__cam_path)
@@ -505,6 +510,7 @@ class LP_SDG_Control_Panel:
             current_font = self.FONT_LIST[np.random.choice(len(self.FONT_LIST))]
         else:
             current_font = current_font
+        # current_font =
 
         vehicle_path = str(Path(self.EXTENSION_FOLDER_PATH, self.__plate_tex_path, str(current_vehicle) + "_"))
 
