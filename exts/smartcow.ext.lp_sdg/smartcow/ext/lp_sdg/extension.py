@@ -56,10 +56,9 @@ class LPSDGExtension(omni.ext.IExt):
     def on_shutdown(self):
         print("Extension shutdown")
         self._menu = None
-        if self._window:
+        if hasattr(self, '_window'):
             self._window.destroy()
             self._window = None
-
         # Deregister the function that shows the window from omni.ui
         ui.Workspace.set_show_window_fn(LPSDGExtension.WINDOW_NAME, None)
 
@@ -73,7 +72,7 @@ class LPSDGExtension(omni.ext.IExt):
         # wait one frame, this is due to the one frame defer
         # in Window::_moveToMainOSWindow()
         await omni.kit.app.get_app().next_update_async()
-        if self._window:
+        if hasattr(self, '_window'):
             self._window.destroy()
             self._window = None
 

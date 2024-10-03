@@ -30,6 +30,7 @@ class WeatherSuite:
 
     def __init__(self, path="omnitools/Weather/", lat=None, lon=None):
         print("Initialized Weather Suite.")
+        print("Weather path:", path)
         self._effect_path = str(path)
         self.lat = lat
         self.lon = lon

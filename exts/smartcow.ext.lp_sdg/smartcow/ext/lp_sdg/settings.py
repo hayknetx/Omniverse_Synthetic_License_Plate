@@ -2,7 +2,7 @@
 DT_SCENE_DIRECTORY = "usd_scene/Collected_scene/scene.usd"
 
 # Camera Resolution
-RESOLUTION = (1920, 1080)  # 1080P Resolution default
+RESOLUTION = (1080, 720)  # 1080P Resolution default
 
 # Number of Samples Per Pixel for PathTracing
 SPP = 1024 # default: 1024

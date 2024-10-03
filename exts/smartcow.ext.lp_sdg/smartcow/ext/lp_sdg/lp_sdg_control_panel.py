@@ -119,7 +119,7 @@ class LP_SDG_Control_Panel:
 
         # The derived names (+ defaults)
         self.VEHICLE_NAMES = ["Vehicle 1", "Vehicle 2", "Vehicle 3", "Vehicle 4", "Vehicle 5", "Vehicle 6"]
-        self.CAMERA_NAMES = ["Camera 1", "Camera 2", "Camera 3", "Camera 4"]
+        self.CAMERA_NAMES = ["Camera 1", "Camera 2", "Camera 3", "Camera 4", "Camera 5", "Camera 6"]
         self.LIGHT_NAMES = ["Lights"]
 
         # Font handling
@@ -135,8 +135,8 @@ class LP_SDG_Control_Panel:
         self.__randomize_font = True
 
         # Materials location for LP in scene: ADJUST!
-        self.WHITE_BG_MAT = self.__materials_path + "WhitePlateWithShader_Material"
-        self.YELLOW_BG_MAT = self.__materials_path + "YellowPlateWithShader_Material"
+        self.ARM_BG_MAT = self.__materials_path + "Arm_Material"
+        self.ARM_MIL_BG_MAT = self.__materials_path + "ArmMil_Material"
         self.SCRATCHES_MAT = self.__materials_path + "Procedural_Scratches_material/Scratches_Procedural"
         self.DIRT_MAT = self.__materials_path + "Procedural_Dirt_material/Dirt_Procedural_2"
 
@@ -165,8 +165,8 @@ class LP_SDG_Control_Panel:
         # Calling and setting up the PlateGenerator extension
         self.plate_generator = IndianLicensePlateGenerator(
             working_dir=self.EXTENSION_FOLDER_PATH,
-            white_bg_mat=self.WHITE_BG_MAT,
-            yellow_bg_mat=self.YELLOW_BG_MAT,
+            arm_bg_material=self.ARM_BG_MAT,
+            arm_mil_bg_material=self.ARM_MIL_BG_MAT,
             regions_path=self.__rto_data_path,
         )
 
@@ -179,9 +179,8 @@ class LP_SDG_Control_Panel:
 
         # FONTS
         self.FONT_LIST = [str(i) for i in Path(self.EXTENSION_FOLDER_PATH, self.__font_path).rglob("*.ttf")]
-
         # Probability of white plate VS yellow plate
-        self.PLATE_PROB = {"private": 0.75, "commercial": 0.25}  # default: {"private" : 0.75, "commercial" : 0.25}
+        self.PLATE_PROB = {"arm": 0.5, "arm_mil": 0.5}
 
         # Threshold for distance from camera before the LP is considered "unreadable" (based on the human eye)
         self.CAM_THRESH = 1500.0  # default: 1500.0
@@ -316,11 +315,11 @@ class LP_SDG_Control_Panel:
 
     async def initialize(self):
         # IMPORTANT!!!!!! PRE-LOAD THE SCENE TO BE ABLE TO SET VARIABLES!
-        # try:
-        #     # _load_scene(self.__scene_dir)
-        #     await self._load_scene_async(self.__scene_dir)
-        # except Exception as e:
-        #     print(f"ERROR! Could not load stage; Traceback: {e}")
+        try:
+            # _load_scene(self.__scene_dir)
+            await self._load_scene_async(self.__scene_dir)
+        except Exception as e:
+            print(f"ERROR! Could not load stage; Traceback: {e}")
 
         # Kickstart everything! NOTE: USERS MUST WAIT HERE!
         asyncio.ensure_future(self._initialize_cars_with_lps())
@@ -402,32 +401,32 @@ class LP_SDG_Control_Panel:
 
         if self.cam_suite.is_in_cam_view(stage, active_cam, veh_bbox):
             # Calculates the 2D coordinates of the object with respect to the desired camera
-            veh_coords_2d = [
-                self.cam_suite.point_to_pixel(
-                    stage,
-                    active_cam,
-                    aligned_veh_bbox.GetCorner(i),
-                    resolution=self.__resolution,
-                )
-                for i in range(8)
-            ]
+            # veh_coords_2d = [
+            #     self.cam_suite.point_to_pixel(
+            #         stage,
+            #         active_cam,
+            #         aligned_veh_bbox.GetCorner(i),
+            #         resolution=self.__resolution,
+            #     )
+            #     for i in range(8)
+            # ]
 
             # Returns the 2D Bounding Box calculated from the 3D points
-            veh_bbox_2d = self.manip_suite.extract_bbox2D(veh_coords_2d)
+            # veh_bbox_2d = self.manip_suite.extract_bbox2D(veh_coords_2d)
 
             # print(f"Vehicle 2D Bounding Box: {veh_bbox_2d}")
 
-            self.append_annotator(
-                ts=date,
-                im_name=im_name,
-                fps=self.__fps,
-                lat=self.__lat,
-                lon=self.__lon,
-                frame=self.mov_suite.get_current_point_on_timeline(self.STAGE),
-                obj_id=0,
-                bbox2d=veh_bbox_2d,
-                lp_text=np.nan,
-            )
+            # self.append_annotator(
+            #     ts=date,
+            #     im_name=im_name,
+            #     fps=self.__fps,
+            #     lat=self.__lat,
+            #     lon=self.__lon,
+            #     frame=self.mov_suite.get_current_point_on_timeline(self.STAGE),
+            #     obj_id=0,
+            #     bbox2d=veh_bbox_2d,
+            #     lp_text=lp_text,
+            # )
 
             front_plate_path = vehicle + "/NumberPlateAsset_F/NumberPlate"
             back_plate_path = vehicle + "/NumberPlateAsset_R/NumberPlate"
@@ -497,7 +496,7 @@ class LP_SDG_Control_Panel:
     ## PUBLIC FUNCTIONS ##
     ######################
 
-    def generate_lp(self, current_vehicle, randomize_font=True, current_font=""):
+    async def generate_lp(self, current_vehicle, randomize_font=True, current_font=""):
         """Generates a License Plate for a select vehicle"""
         # Generate LP on current vehicle
 
@@ -505,10 +504,11 @@ class LP_SDG_Control_Panel:
             current_font = self.FONT_LIST[np.random.choice(len(self.FONT_LIST))]
         else:
             current_font = current_font
+        # current_font =
 
         vehicle_path = str(Path(self.EXTENSION_FOLDER_PATH, self.__plate_tex_path, str(current_vehicle) + "_"))
 
-        asyncio.ensure_future(
+        lp_text = await asyncio.ensure_future(
             self.plate_generator.make_lp(
                 self.STAGE,
                 self.VEHICLES[current_vehicle],
@@ -525,6 +525,7 @@ class LP_SDG_Control_Panel:
                 show_lp_text=True,
             )
         )
+        return lp_text
 
     async def randomize_scene(self, im_name="", rendermode="PathTracing", save=False):
         # Clear data so that the randomizer can append new data
@@ -559,7 +560,7 @@ class LP_SDG_Control_Panel:
             )
 
             # Assign LP to select vehicle
-            lp = self.generate_lp(current_vehicle, current_font=self.CURRENT_FONT, randomize_font=self.randomize_font)
+            lp = await self.generate_lp(current_vehicle, current_font=self.CURRENT_FONT, randomize_font=self.randomize_font)
 
             self.LICENSE_PLATES[current_vehicle] = lp
 

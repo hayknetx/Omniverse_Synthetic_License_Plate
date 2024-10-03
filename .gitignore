@@ -15,4 +15,9 @@ _*/
 
 /.venv
 
-/exts/smartcow.ext.lp_sdg/smartcow/ext/lp_sdg/usd_scene/Collected_scene
+/exts/smartcow.ext.lp_sdg/smartcow/ext/lp_sdg/scene_utils/generated
+/exts/smartcow.ext.lp_sdg/smartcow/ext/lp_sdg/synth_out/data
+/exts/smartcow.ext.lp_sdg/smartcow/ext/lp_sdg/synth_out/snapshots
+/exts/smartcow.ext.lp_sdg/smartcow/ext/lp_sdg/synth_out/cropped_images
+/exts/smartcow.ext.lp_sdg/smartcow/ext/lp_sdg/synth_out/output_file.tsv
+/exts/smartcow.ext.lp_sdg/smartcow/ext/lp_sdg/usd_scene/
