@@ -33,6 +33,7 @@ from smartcow.ext.lp_sdg.custom_exts.movementsuite import MovementSuite
 from smartcow.ext.lp_sdg.custom_exts.camerasuite import CameraSuite
 
 from smartcow.ext.lp_sdg.custom_exts.indianplategensuite import IndianLicensePlateGenerator
+from tqdm import tqdm
 
 from .settings import (
     DT_SCENE_DIRECTORY,
@@ -54,6 +55,7 @@ from .settings import (
     STRF_DATE,
     STRF_DATETIME,
 )
+
 
 ################
 ## MAIN CLASS ##
@@ -141,8 +143,8 @@ class LP_SDG_Control_Panel:
         self.DIRT_MAT = self.__materials_path + "Procedural_Dirt_material/Dirt_Procedural_2"
 
         # Plate Dimensions: Single-line
-        self.PLATE_TEX_WIDTH = 1000
-        self.PLATE_TEX_HEIGHT = 1000
+        self.PLATE_TEX_WIDTH = 500
+        self.PLATE_TEX_HEIGHT = 500
 
         # Plate Dimensions: 2-line
         self.PLATE_MULTILINE_TEX_WIDTH = 575
@@ -168,6 +170,7 @@ class LP_SDG_Control_Panel:
             arm_bg_material=self.ARM_BG_MAT,
             arm_mil_bg_material=self.ARM_MIL_BG_MAT,
             regions_path=self.__rto_data_path,
+            text_width=self.PLATE_TEX_WIDTH
         )
 
         #####################
@@ -183,7 +186,7 @@ class LP_SDG_Control_Panel:
         self.PLATE_PROB = {"arm": 0.5, "arm_mil": 0.5}
 
         # Threshold for distance from camera before the LP is considered "unreadable" (based on the human eye)
-        self.CAM_THRESH = 1500.0  # default: 1500.0
+        self.CAM_THRESH = 2500.0  # default: 1500.0
 
         # Currently selected vehicle
         self.CURR_VEHICLE = 0  # default: 0
@@ -479,7 +482,19 @@ class LP_SDG_Control_Panel:
 
                     # Show LP 2D Coordinates
                     # print(f"LP Coords: {lp_bbox_2d}")
-
+                    lp_bbox_2d = list(lp_bbox_2d)
+                    if "motorbike" in vehicle.lower():
+                        y_go_up = 20
+                        lp_bbox_2d[2] -= y_go_up
+                        lp_bbox_2d[3] -= y_go_up
+                    if "mercedes" in vehicle.lower():
+                        y_go_up = 20
+                        lp_bbox_2d[2] -= y_go_up
+                        lp_bbox_2d[3] -= y_go_up
+                    if "range" in vehicle.lower():
+                        y_go_up = 10
+                        lp_bbox_2d[2] -= y_go_up
+                        lp_bbox_2d[3] -= y_go_up
                     self.append_annotator(
                         ts=date,
                         im_name=im_name,
@@ -551,16 +566,18 @@ class LP_SDG_Control_Panel:
         [self.manip_suite.toggle_visibility(self.STAGE, light, is_visible=show_lights) for light in self.LIGHTS]
 
         # Just wait until the cam has switched a little
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
 
         # 4) Generate LPs for all vehicles
         for current_vehicle in range(len(self.VEHICLES)):
+
+            # Assign LP to select vehicle
+            lp = await asyncio.ensure_future(
+                self.generate_lp(current_vehicle, current_font=self.CURRENT_FONT, randomize_font=self.randomize_font))
+
             self.manip_suite.toggle_visibility(
                 self.STAGE, self.VEHICLES[current_vehicle] + "/Vehicle_Lights", is_visible=show_lights
             )
-
-            # Assign LP to select vehicle
-            lp = await self.generate_lp(current_vehicle, current_font=self.CURRENT_FONT, randomize_font=self.randomize_font)
 
             self.LICENSE_PLATES[current_vehicle] = lp
 
@@ -575,7 +592,7 @@ class LP_SDG_Control_Panel:
                 )
 
         # Capture delay
-        await asyncio.sleep(2)
+        # await asyncio.sleep(2)
 
         if save:
             # Save LPs in dedicated path
@@ -594,10 +611,19 @@ class LP_SDG_Control_Panel:
             )
 
     async def create_synthetic_data(self, synthetic_samples, rendermode="PathTracing"):
-        for i in range(synthetic_samples):
-            await asyncio.ensure_future(
-                self.randomize_scene(im_name=(str(i).zfill(8) + ".png"), rendermode=rendermode, save=True)
-            )
+        batch_count = 1
+        if synthetic_samples > 500:
+            batch_count = 10
+        if synthetic_samples > 5000:
+            batch_count = 100
+        for batch in range(batch_count):
+            for i in tqdm(range(synthetic_samples // batch_count),
+                          desc=f"Generating Plates batch {batch}/{batch_count}"):
+                await asyncio.ensure_future(
+                    self.randomize_scene(
+                        im_name=(str(i + (synthetic_samples // batch_count) * batch).zfill(8) + ".png"),
+                        rendermode=rendermode, save=True)
+                )
 
     def append_annotator(self, ts, im_name, fps, frame, obj_id, bbox2d, lp_text, lat, lon):
         """Appends LP information to the designated .csv file"""
@@ -676,7 +702,8 @@ class LP_SDG_Control_Panel:
 
     def set_scratch_intensity_front(self, model):
         mat_path = (
-            self.VEHICLES[self.current_vehicle] + "/Shared_Materials/Procedural_Scratches_material/Scratches_Procedural"
+                self.VEHICLES[
+                    self.current_vehicle] + "/Shared_Materials/Procedural_Scratches_material/Scratches_Procedural"
         )
         object_path = self.VEHICLES[self.current_vehicle] + "/NumberPlateAsset_F/Damage_Scratches"
         param_name = "opacity_threshold"
@@ -686,8 +713,8 @@ class LP_SDG_Control_Panel:
 
     def set_scratch_intensity_rear(self, model):
         mat_path = (
-            self.VEHICLES[self.current_vehicle]
-            + "/Shared_Materials/Procedural_Scratches_material_01/Scratches_Procedural"
+                self.VEHICLES[self.current_vehicle]
+                + "/Shared_Materials/Procedural_Scratches_material_01/Scratches_Procedural"
         )
         object_path = self.VEHICLES[self.current_vehicle] + "/NumberPlateAsset_R/Damage_Scratches"
         param_name = "opacity_threshold"
@@ -705,7 +732,7 @@ class LP_SDG_Control_Panel:
 
     def set_dirt_intensity_rear(self, model):
         mat_path = (
-            self.VEHICLES[self.current_vehicle] + "/Shared_Materials/Procedural_Dirt_material_01/Dirt_Procedural_2"
+                self.VEHICLES[self.current_vehicle] + "/Shared_Materials/Procedural_Dirt_material_01/Dirt_Procedural_2"
         )
         object_path = self.VEHICLES[self.current_vehicle] + "/NumberPlateAsset_R/Damage_Dirt"
         param_name = "opacity_threshold"
@@ -813,7 +840,7 @@ class LP_SDG_Control_Panel:
         self.clear_data()
 
         # Capture delay
-        await asyncio.sleep(1)
+        # await asyncio.sleep(1)
 
         # Take respective screenshot :D
         await self.cap_suite.take_screenshot_async(

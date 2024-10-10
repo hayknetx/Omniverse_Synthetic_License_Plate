@@ -16,17 +16,17 @@ class CaptureSuite:
         print("Initialized Screen Capture Tool.")
 
     def take_screenshot(
-        self,
-        img_path="",
-        use_custom_camera=False,
-        switch_cam=False,
-        cam_path="/World/Camera",
-        resolution=(1920, 1080),
-        rendermode="PathTracing",
-        spp=64,
-        disable_async=False,
+            self,
+            img_path="",
+            use_custom_camera=False,
+            switch_cam=False,
+            cam_path="/World/Camera",
+            resolution=(1920, 1080),
+            rendermode="PathTracing",
+            spp=64,
+            disable_async=False,
     ):
-        print("Configuring capture settings... ")
+        # print("Configuring capture settings... ")
 
         # Create capture path if it doesn't exist
         if not os.path.exists(os.path.dirname(img_path)):
@@ -57,7 +57,7 @@ class CaptureSuite:
 
             print("Switching to PathTracing")
 
-        print("Acquiring viewport interface... ")
+        # print("Acquiring viewport interface... ")
 
         # Get main viewport and renderer
         # viewport_interface = omni.kit.viewport.acquire_viewport_interface()
@@ -86,22 +86,22 @@ class CaptureSuite:
         # Get viewport image.
         # viewport_ldr = viewport_window.get_drawable_ldr_resource()
 
-        print("Say cheese!")
+        # print("Say cheese!")
 
         # Get renderer and render image
         # renderer.capture_next_frame_rp_resource(img_path, viewport_ldr)
         omni.kit.viewport.utility.capture_viewport_to_file(file_path=img_path, viewport_api=viewport_window)
 
     async def take_screenshot_async(
-        self,
-        img_path="",
-        use_custom_camera=False,
-        switch_cam=False,
-        cam_path="/World/Camera",
-        resolution=(1920, 1080),
-        rendermode="PathTracing",
-        spp=64,
-        disable_async=False,
+            self,
+            img_path="",
+            use_custom_camera=False,
+            switch_cam=False,
+            cam_path="/World/Camera",
+            resolution=(1920, 1080),
+            rendermode="PathTracing",
+            spp=64,
+            disable_async=False,
     ):
         await omni.kit.app.get_app().next_update_async()
         self.take_screenshot(
@@ -109,7 +109,8 @@ class CaptureSuite:
         )
 
     async def take_screenshot_legacy(
-        self, img_path="", use_custom_camera=False, cam_path="/World/Camera", resolution=(1920, 1080), capture_delay=5
+            self, img_path="", use_custom_camera=False, cam_path="/World/Camera", resolution=(1920, 1080),
+            capture_delay=5
     ):
         print("Capturing screen... ")
 

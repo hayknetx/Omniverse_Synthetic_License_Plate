@@ -34,12 +34,14 @@ class IndianLicensePlateGenerator:
     SPACERS_1 = np.array(["", " "])
     SPACERS_2 = np.array(["", " ", "  "])
 
-    def __init__(self, working_dir, arm_bg_material, arm_mil_bg_material, regions_path="regions.txt", seed=None):
+    def __init__(self, working_dir, arm_bg_material, arm_mil_bg_material, text_width, regions_path="regions.txt",
+                 seed=None):
         """Entrypoint for LP-SDG extension"""
         self.working_dir = str(working_dir)
         self.arm_bg_material = arm_bg_material
         self.arm_mil_bg_material = arm_mil_bg_material
         self.Vehicle_paths = []
+        self.font_size_upscale = text_width // 100
 
         """
         regions: State/UT + District code for license plate
@@ -164,13 +166,13 @@ class IndianLicensePlateGenerator:
         # cache font to avoid time consuming operation i.e., font size calculation
         font_key = f"{font_file}_{width}_{height}_{padding}_{linespace}_{multiline}"
         if not font_key in self.FONT:
-            custom_font_size = 200
+            custom_font_size = 20 * self.font_size_upscale
             custom_max_chars = 7
             if lp_type == "arm":
-                custom_font_size = 180
+                custom_font_size = 18 * self.font_size_upscale
                 custom_max_chars = 7
             elif lp_type == "arm_mil":
-                custom_font_size = 200
+                custom_font_size = 20 * self.font_size_upscale
                 custom_max_chars = 7
             self.FONT[font_key] = self.load_font(
                 width,
@@ -216,14 +218,14 @@ class IndianLicensePlateGenerator:
                 width,
                 height,
                 font_file,
-                font_size=160,
+                font_size=16 * self.font_size_upscale,
                 max_chars=2,
             )
             font_bold_large = self.load_font(
                 width,
                 height,
                 font_file,
-                font_size=200,
+                font_size=20 * self.font_size_upscale,
                 max_chars=4,
             )
 
@@ -305,7 +307,7 @@ class IndianLicensePlateGenerator:
         src.save(save_path + "plate.png", "PNG")
 
         # Save generated normal map
-        normal_map.save(save_path + "plate_normals.png", "PNG")
+        # normal_map.save(save_path + "plate_normals.png", "PNG")
 
         return lp, lp_type, (bg_color, text_color)
 
@@ -403,7 +405,7 @@ class IndianLicensePlateGenerator:
     ):
         """Creates and binds the license plate images to the correct regions"""
 
-        print("Generating License Plates")
+        # print("Generating License Plates")
 
         lp_text, lp_type, (bg_color, text_color) = await asyncio.ensure_future(
             self.generate_image(
@@ -420,7 +422,7 @@ class IndianLicensePlateGenerator:
             )
         )
 
-        print("License Plates Generated!")
+        # print("License Plates Generated!")
 
         # Retrieval of vehicle and LP prims, bboxes
         lp_prim_f = vehicle_path + "/NumberPlateAsset_F/LP"
@@ -474,7 +476,7 @@ class IndianLicensePlateGenerator:
             self.remove_dirt(stage, plate_dirt_r_path)
             self.Vehicle_paths.append(vehicle_path)
 
-        if show_lp_text:
-            print(f"License Plate Text: {lp_text}")
+        # if show_lp_text:
+        #     print(f"License Plate Text: {lp_text}")
 
         return lp_text

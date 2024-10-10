@@ -2,19 +2,19 @@
 DT_SCENE_DIRECTORY = "usd_scene/Collected_scene/scene.usd"
 
 # Camera Resolution
-RESOLUTION = (1080, 720)  # 1080P Resolution default
+RESOLUTION = (1280, 720)  # 1080P Resolution default
 
 # Number of Samples Per Pixel for PathTracing
-SPP = 1024 # default: 1024
+SPP = 1024  # default: 1024
 
 # Framerate of vehicles; switch this to 60 once new anims are imported
-FPS = 24.0 # default: 24.0
+FPS = 24.0  # default: 24.0
 
 # Number of Samples to Generate
-SDG_SAMPLES = 5000 # default: 5000
+SDG_SAMPLES = 5000  # default: 5000
 
 # Length of Video (in minutes)
-SDG_RECORD_LENGTH = 5 # default: 5
+SDG_RECORD_LENGTH = 5  # default: 5
 
 # How to render the scene (RayTracedLighting VS PathTracing)
 RENDERMODE = "PathTracing"  # default: "PathTracing"
@@ -47,8 +47,8 @@ RTO_DATA_PATH = "scene_utils/regions.txt"
 PLATE_TEX_PATH = "scene_utils/generated/"
 
 # Some defaults for plate damage
-DEFAULT_SCRATCH_VALUE = 0.05 # default: 0.05
-DEFAULT_DIRT_VALUE = 0.1 # default: 0.1
+DEFAULT_SCRATCH_VALUE = 0.05  # default: 0.05
+DEFAULT_DIRT_VALUE = 0.1  # default: 0.1
 
 # Save Directory
 SAVE_DIR = "synth_out/"
