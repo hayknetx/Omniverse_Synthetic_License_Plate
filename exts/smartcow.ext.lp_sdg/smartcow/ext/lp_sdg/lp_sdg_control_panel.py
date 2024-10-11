@@ -611,19 +611,10 @@ class LP_SDG_Control_Panel:
             )
 
     async def create_synthetic_data(self, synthetic_samples, rendermode="PathTracing"):
-        batch_count = 1
-        if synthetic_samples > 500:
-            batch_count = 10
-        if synthetic_samples > 5000:
-            batch_count = 100
-        for batch in range(batch_count):
-            for i in tqdm(range(synthetic_samples // batch_count),
-                          desc=f"Generating Plates batch {batch}/{batch_count}"):
-                await asyncio.ensure_future(
-                    self.randomize_scene(
-                        im_name=(str(i + (synthetic_samples // batch_count) * batch).zfill(8) + ".png"),
-                        rendermode=rendermode, save=True)
-                )
+        for i in tqdm(range(synthetic_samples), desc=f"Generating Plates"):
+            await asyncio.ensure_future(
+                self.randomize_scene(im_name=(str(i).zfill(8) + ".png"), rendermode=rendermode, save=True)
+            )
 
     def append_annotator(self, ts, im_name, fps, frame, obj_id, bbox2d, lp_text, lat, lon):
         """Appends LP information to the designated .csv file"""
