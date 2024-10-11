@@ -566,7 +566,7 @@ class LP_SDG_Control_Panel:
         [self.manip_suite.toggle_visibility(self.STAGE, light, is_visible=show_lights) for light in self.LIGHTS]
 
         # Just wait until the cam has switched a little
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1)
 
         # 4) Generate LPs for all vehicles
         for current_vehicle in range(len(self.VEHICLES)):
@@ -592,7 +592,7 @@ class LP_SDG_Control_Panel:
                 )
 
         # Capture delay
-        # await asyncio.sleep(2)
+        await asyncio.sleep(1)
 
         if save:
             # Save LPs in dedicated path
@@ -840,7 +840,7 @@ class LP_SDG_Control_Panel:
         self.clear_data()
 
         # Capture delay
-        # await asyncio.sleep(1)
+        await asyncio.sleep(1)
 
         # Take respective screenshot :D
         await self.cap_suite.take_screenshot_async(
