@@ -18,6 +18,7 @@ import carb.settings
 # Non-Omniverse Packages
 import asyncio
 import os
+import sys
 import pathlib
 from pathlib import Path
 
@@ -612,7 +613,7 @@ class LP_SDG_Control_Panel:
             )
 
     async def create_synthetic_data(self, synthetic_samples, rendermode="PathTracing"):
-        for i in tqdm(range(synthetic_samples), desc=f"Generating Plates"):
+        for i in tqdm(range(synthetic_samples), desc=f"Generating Plates", file=sys.stdout):
             await asyncio.ensure_future(
                 self.randomize_scene(im_name=(str(i).zfill(8) + ".png"), rendermode=rendermode, save=True)
             )
