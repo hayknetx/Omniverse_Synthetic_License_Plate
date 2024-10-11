@@ -408,10 +408,10 @@ class IndianLicensePlateGenerator:
         """Creates and binds the license plate images to the correct regions"""
 
         # print("Generating License Plates")
-        image_name = image_name.split('.')[0] + "_"
+        image_name = "image" + str(int(image_name.split('.')[0]) % 10) + "_"
         save_path = os.path.join(os.path.dirname(save_path), image_name + os.path.basename(save_path))
         if image_name not in self.plate_image_names:
-            if len(self.plate_image_names) == 10:
+            if len(self.plate_image_names) == 5:
                 del_image_name = self.plate_image_names[0]
                 for i in range(len(self.Vehicle_paths)):
                     del_image_path = os.path.join(os.path.dirname(save_path), del_image_name + str(i)) + "_"

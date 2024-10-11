@@ -394,7 +394,8 @@ class LP_SDG_Control_Panel:
             )
 
             # Assign LP to select vehicle
-            lp = self.generate_lp("imagex", current_vehicle, randomize_font=self.randomize_font, current_font=self.CURRENT_FONT)
+            lp = self.generate_lp("imagex", current_vehicle, randomize_font=self.randomize_font,
+                                  current_font=self.CURRENT_FONT)
 
             self.LICENSE_PLATES[current_vehicle] = lp
 
@@ -544,9 +545,29 @@ class LP_SDG_Control_Panel:
         )
         return lp_text
 
-    async def randomize_scene(self, im_name="imagex", rendermode="PathTracing", save=False):
+    def get_directory_size(self, directory):
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(directory):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                total_size += os.path.getsize(fp)
+        size_in_mb = total_size / (1024 * 1024)
+        return size_in_mb
+
+    def clear_cache(self, directory):
+        for dirpath, dirnames, filenames in os.walk(directory):
+            for f in filenames:
+                if "plate" in f and "image" in f:
+                    fp = os.path.join(dirpath, f)
+                    os.remove(fp)
+
+    async def randomize_scene(self, im_name="-1", rendermode="PathTracing", save=False):
         # Clear data so that the randomizer can append new data
         self.clear_data()
+        directory_path = '/home/guest/.cache/ov'
+        size_in_mb = self.get_directory_size(directory_path)
+        if size_in_mb > 20000:
+            self.clear_cache(directory_path)
 
         # 1) Position Cars
         timeline_pos = np.random.randint(0, self.mov_suite.get_end_timecode(self.STAGE))
@@ -575,7 +596,8 @@ class LP_SDG_Control_Panel:
 
             # Assign LP to select vehicle
             lp = await asyncio.ensure_future(
-                self.generate_lp(im_name, current_vehicle, current_font=self.CURRENT_FONT, randomize_font=self.randomize_font))
+                self.generate_lp(im_name, current_vehicle, current_font=self.CURRENT_FONT,
+                                 randomize_font=self.randomize_font))
 
             self.manip_suite.toggle_visibility(
                 self.STAGE, self.VEHICLES[current_vehicle] + "/Vehicle_Lights", is_visible=show_lights
