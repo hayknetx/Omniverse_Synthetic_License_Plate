@@ -55,6 +55,7 @@ class IndianLicensePlateGenerator:
         assert len(self.REGIONS), "Regions cannot be empty"
 
         self.FONT = {}
+        self.plate_image_names = []
 
         # seed random generators
         if seed is not None:
@@ -307,7 +308,7 @@ class IndianLicensePlateGenerator:
         src.save(save_path + "plate.png", "PNG")
 
         # Save generated normal map
-        # normal_map.save(save_path + "plate_normals.png", "PNG")
+        normal_map.save(save_path + "plate_normals.png", "PNG")
 
         return lp, lp_type, (bg_color, text_color)
 
@@ -396,6 +397,7 @@ class IndianLicensePlateGenerator:
             save_path,
             lp_types,
             font_file,
+            image_name,
             bluriness=0,
             sobel=0,
             padding=12,
@@ -406,20 +408,28 @@ class IndianLicensePlateGenerator:
         """Creates and binds the license plate images to the correct regions"""
 
         # print("Generating License Plates")
-
-        lp_text, lp_type, (bg_color, text_color) = await asyncio.ensure_future(
-            self.generate_image(
-                save_path,
-                width=im_width,
-                height=im_height,
-                font_file=font_file,
-                lp_types=lp_types,
-                bluriness=bluriness,
-                sobel=sobel,
-                padding=padding,
-                linespace=linespace,
-                multiline=multiline,
-            )
+        image_name = image_name.split('.')[0] + "_"
+        save_path = os.path.join(os.path.dirname(save_path), image_name + os.path.basename(save_path))
+        if image_name not in self.plate_image_names:
+            if len(self.plate_image_names) == 10:
+                del_image_name = self.plate_image_names[0]
+                for i in range(len(self.Vehicle_paths)):
+                    del_image_path = os.path.join(os.path.dirname(save_path), del_image_name + str(i)) + "_"
+                    os.remove(del_image_path + "plate.png")
+                    os.remove(del_image_path + "plate_normals.png")
+                del self.plate_image_names[0]
+            self.plate_image_names.append(image_name)
+        lp_text, lp_type, (bg_color, text_color) = await self.generate_image(
+            save_path,
+            width=im_width,
+            height=im_height,
+            font_file=font_file,
+            lp_types=lp_types,
+            bluriness=bluriness,
+            sobel=sobel,
+            padding=padding,
+            linespace=linespace,
+            multiline=multiline,
         )
 
         # print("License Plates Generated!")

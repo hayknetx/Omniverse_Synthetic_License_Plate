@@ -393,7 +393,7 @@ class LP_SDG_Control_Panel:
             )
 
             # Assign LP to select vehicle
-            lp = self.generate_lp(current_vehicle, randomize_font=self.randomize_font, current_font=self.CURRENT_FONT)
+            lp = self.generate_lp("imagex", current_vehicle, randomize_font=self.randomize_font, current_font=self.CURRENT_FONT)
 
             self.LICENSE_PLATES[current_vehicle] = lp
 
@@ -511,7 +511,7 @@ class LP_SDG_Control_Panel:
     ## PUBLIC FUNCTIONS ##
     ######################
 
-    async def generate_lp(self, current_vehicle, randomize_font=True, current_font=""):
+    async def generate_lp(self, im_name, current_vehicle, randomize_font=True, current_font=""):
         """Generates a License Plate for a select vehicle"""
         # Generate LP on current vehicle
 
@@ -532,6 +532,7 @@ class LP_SDG_Control_Panel:
                 vehicle_path,
                 self.PLATE_PROB,
                 current_font,
+                im_name,
                 bluriness=self.bluriness,
                 sobel=0,
                 padding=12,
@@ -542,7 +543,7 @@ class LP_SDG_Control_Panel:
         )
         return lp_text
 
-    async def randomize_scene(self, im_name="", rendermode="PathTracing", save=False):
+    async def randomize_scene(self, im_name="imagex", rendermode="PathTracing", save=False):
         # Clear data so that the randomizer can append new data
         self.clear_data()
 
@@ -573,7 +574,7 @@ class LP_SDG_Control_Panel:
 
             # Assign LP to select vehicle
             lp = await asyncio.ensure_future(
-                self.generate_lp(current_vehicle, current_font=self.CURRENT_FONT, randomize_font=self.randomize_font))
+                self.generate_lp(im_name, current_vehicle, current_font=self.CURRENT_FONT, randomize_font=self.randomize_font))
 
             self.manip_suite.toggle_visibility(
                 self.STAGE, self.VEHICLES[current_vehicle] + "/Vehicle_Lights", is_visible=show_lights
