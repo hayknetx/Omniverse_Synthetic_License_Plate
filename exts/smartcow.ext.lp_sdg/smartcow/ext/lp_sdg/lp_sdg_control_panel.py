@@ -10,13 +10,12 @@ import omni.usd
 import omni.ui as ui
 import omni.kit.commands
 import omni.timeline
-
+import gc
 # Carb imports
 import carb.events
 import carb.settings
 
 # Non-Omniverse Packages
-import asyncio
 import os
 import sys
 import pathlib
@@ -25,6 +24,7 @@ from pathlib import Path
 # from elasticsearch import Elasticsearch
 import numpy as np
 import pandas as pd
+import torch
 
 from smartcow.ext.lp_sdg.custom_exts.capturesuite import CaptureSuite
 from smartcow.ext.lp_sdg.custom_exts.weathersuite import WeatherSuite
@@ -35,6 +35,7 @@ from smartcow.ext.lp_sdg.custom_exts.camerasuite import CameraSuite
 
 from smartcow.ext.lp_sdg.custom_exts.indianplategensuite import IndianLicensePlateGenerator
 from tqdm import tqdm
+import asyncio
 
 from .settings import (
     DT_SCENE_DIRECTORY,
@@ -140,6 +141,7 @@ class LP_SDG_Control_Panel:
         # Materials location for LP in scene: ADJUST!
         self.ARM_BG_MAT = self.__materials_path + "Arm_Material"
         self.ARM_MIL_BG_MAT = self.__materials_path + "ArmMil_Material"
+        self.ARM_HEIGHT_BG_MAT = self.__materials_path + "ArmHeight_Material"
         self.SCRATCHES_MAT = self.__materials_path + "Procedural_Scratches_material/Scratches_Procedural"
         self.DIRT_MAT = self.__materials_path + "Procedural_Dirt_material/Dirt_Procedural_2"
 
@@ -170,6 +172,7 @@ class LP_SDG_Control_Panel:
             working_dir=self.EXTENSION_FOLDER_PATH,
             arm_bg_material=self.ARM_BG_MAT,
             arm_mil_bg_material=self.ARM_MIL_BG_MAT,
+            arm_height_bg_material=self.ARM_HEIGHT_BG_MAT,
             regions_path=self.__rto_data_path,
             text_width=self.PLATE_TEX_WIDTH
         )
@@ -184,7 +187,7 @@ class LP_SDG_Control_Panel:
         # FONTS
         self.FONT_LIST = [str(i) for i in Path(self.EXTENSION_FOLDER_PATH, self.__font_path).rglob("*.ttf")]
         # Probability of white plate VS yellow plate
-        self.PLATE_PROB = {"arm": 0.5, "arm_mil": 0.5}
+        self.PLATE_PROB = {"arm": 0.2, "arm_mil": 0.2, "arm_height": 0.6}
 
         # Threshold for distance from camera before the LP is considered "unreadable" (based on the human eye)
         self.CAM_THRESH = 2500.0  # default: 1500.0
@@ -375,7 +378,7 @@ class LP_SDG_Control_Panel:
         self.LICENSE_PLATES = [""] * len(self.VEHICLES)
 
         # Set current vehicle as the selected one
-        self.SELECTION.set_selected_prim_paths([self.VEHICLES[self.CURR_VEHICLE]], True)
+        # self.SELECTION.set_selected_prim_paths([self.VEHICLES[self.CURR_VEHICLE]], True)
 
         # Switch cam to default car
         self.cam_suite.switch_camera(self.VEHICLES[self.current_vehicle] + "/Follow_Camera")
@@ -443,7 +446,7 @@ class LP_SDG_Control_Panel:
             # Check if LP is viewable as front or back LP
             lp_bbox = None
             aligned_lp_bbox = None
-
+            front = True
             front_lp_dist = self.cam_suite.compute_distance_from_cam(stage, active_cam, aligned_front_box.GetCorner(0))
             back_lp_dist = self.cam_suite.compute_distance_from_cam(stage, active_cam, aligned_back_box.GetCorner(0))
 
@@ -458,6 +461,7 @@ class LP_SDG_Control_Panel:
             elif (back_lp_dist > 0) and (back_lp_dist <= self.CAM_THRESH) and (back_lp_dist < front_lp_dist):
                 lp_bbox = back_bbox
                 aligned_lp_bbox = aligned_back_box
+                front = False
                 # print("Back plate detected")
 
             # Only bother with LPs if they're viewable in the frame :'D
@@ -486,20 +490,33 @@ class LP_SDG_Control_Panel:
                     # print(f"LP Coords: {lp_bbox_2d}")
                     lp_bbox_2d = list(lp_bbox_2d)
                     if "motorbike" in vehicle.lower():
-                        y_go_up = 20
+                        if front:
+                            y_go_up = 20
+                        else:
+                            y_go_up = 0
                         lp_bbox_2d[2] -= y_go_up
                         lp_bbox_2d[3] -= y_go_up
                     if "mercedes" in vehicle.lower():
-                        y_go_up = 20
+                        if front:
+                            y_go_up = 0
+                        else:
+                            y_go_up = 0
                         lp_bbox_2d[2] -= y_go_up
                         lp_bbox_2d[3] -= y_go_up
                     if "range" in vehicle.lower():
-                        y_go_up = 10
+                        if front:
+                            y_go_up = 10
+                        else:
+                            y_go_up = 0
                         lp_bbox_2d[2] -= y_go_up
                         lp_bbox_2d[3] -= y_go_up
+                    save_name = im_name.split('.')[0] + "_"
+                    save_name += os.path.basename(vehicle.lower())
+                    save_name += "_front" if front else "_back"
+                    save_name += '.png'
                     self.append_annotator(
                         ts=date,
-                        im_name=im_name,
+                        im_name=save_name,
                         fps=self.__fps,
                         lat=self.__lat,
                         lon=self.__lon,
@@ -508,6 +525,8 @@ class LP_SDG_Control_Panel:
                         bbox2d=lp_bbox_2d,
                         lp_text=lp_text,
                     )
+                    return save_name
+        return None
 
     ######################
     ## PUBLIC FUNCTIONS ##
@@ -567,6 +586,8 @@ class LP_SDG_Control_Panel:
         directory_path = '/home/guest/.cache/ov'
         size_in_mb = self.get_directory_size(directory_path)
         if size_in_mb > 20000:
+            torch.cuda.empty_cache()
+            gc.collect()
             self.clear_cache(directory_path)
 
         # 1) Position Cars
@@ -592,6 +613,7 @@ class LP_SDG_Control_Panel:
         await asyncio.sleep(1)
 
         # 4) Generate LPs for all vehicles
+        save_name = ""
         for current_vehicle in range(len(self.VEHICLES)):
 
             # Assign LP to select vehicle
@@ -607,13 +629,15 @@ class LP_SDG_Control_Panel:
 
             # Annotate!
             if save:
-                self._get_ground_truth(
+                new_name = self._get_ground_truth(
                     now_time.strftime(self.__strf_datetime),
                     self.STAGE,
                     self.VEHICLES[current_vehicle],
                     im_name,
                     self.LICENSE_PLATES[current_vehicle],
                 )
+                if new_name is not None:
+                    save_name = new_name
 
         # Capture delay
         await asyncio.sleep(1)
@@ -627,7 +651,7 @@ class LP_SDG_Control_Panel:
 
             # Take respective screenshot :D
             await self.cap_suite.take_screenshot_async(
-                f"{self.IM_PATH}/{im_name}",
+                f"{self.IM_PATH}/{save_name}",
                 use_custom_camera=False,
                 resolution=self.__resolution,
                 rendermode=rendermode,

@@ -16,9 +16,11 @@ import carb.events
 import carb.settings
 
 # INSTALL NEEDED PACKAGES!!!
+omni.kit.pipapi.install("tqdm")
 omni.kit.pipapi.install("numpy")
 omni.kit.pipapi.install("pandas")
 omni.kit.pipapi.install("opencv-python")
+omni.kit.pipapi.install("torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 --index-url https://download.pytorch.org/whl/cu121")
 
 from .style import WIN_WIDTH, WIN_HEIGHT
 from .window import LPSDGWindow
@@ -61,7 +63,6 @@ class LPSDGExtension(omni.ext.IExt):
             self._window = None
         # Deregister the function that shows the window from omni.ui
         ui.Workspace.set_show_window_fn(LPSDGExtension.WINDOW_NAME, None)
-        self.on_startup(1)
 
     def _set_menu(self, value):
         """Set the menu to create this window on and off"""

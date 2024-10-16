@@ -5,7 +5,7 @@ DT_SCENE_DIRECTORY = "usd_scene/Collected_scene/scene.usd"
 RESOLUTION = (1280, 720)  # 1080P Resolution default
 
 # Number of Samples Per Pixel for PathTracing
-SPP = 1024  # default: 1024
+SPP = 128  # default: 1024
 
 # Framerate of vehicles; switch this to 60 once new anims are imported
 FPS = 24.0  # default: 24.0
